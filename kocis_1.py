@@ -97,10 +97,10 @@ def task0():
 class robot():
     def __init__(self, scene):
         #kinematic parameters:
-        q = np.array([0, -np.pi/2, 0, np.pi/2, 0, 0])
-        d = np.array([0.15, 0, 0, 0.64, 0, 0.95])
-        a = np.array([0, 0.614, 0.155, 0, 0, 0])
-        al = np.array([np.pi/2, 0, np.pi/2, -np.pi/2, np.pi/2, 0])
+        q = np.array([0, np.pi/2, -np.pi/2, np.pi/2, 0, 0])
+        d = np.array([0, 0, 1, 0, 0, 0.95])
+        a = np.array([0, -0.46, 0, 0.64, 0, 0])
+        al = np.array([-np.pi/2, 0, 0, np.pi/2, -np.pi/2, 0])
 
         self.DH = np.stack((q, d, a, al), 1)
     
@@ -113,11 +113,17 @@ class robot():
         s.add_actor(self.base)  
 
         # Link 1.
-        #self.link1 = vis.cylinder(0.025, 0.05)
-        self.link1 = vis.cube(0.26, 0.67, 0.26)
+        self.link1 = vis.cylinder(0.13, 0.3)
+        #self.link1 = vis.cube(0.26, 0.67, 0.26)
         s.add_actor(self.link1) 
         
-        #Link 2, Link 3...
+        #Link 2
+        self.link2 = vis.cylinder(0.1, 0.614)
+        s.add_actor(self.link2) 
+
+        #Link 3
+        self.link3 = vis.cube(0.3, 0.3, 0.3)
+        s.add_actor(self.link3)
         
         # Tool.
 
@@ -137,13 +143,27 @@ class robot():
         # Link 1.
         T10 = dh(q[0], d[0], a[0], al[0]) #todo: create dh function
         T1S = T0S @ T10
-        TL11 = np.identity(4)
-        #TL11[:3,:3] = rotx(np.pi/2)    
+        TL11 = np.identity(4)    
         TL1S = T1S @ TL11
         vis.set_pose(self.link1, TL1S)
         
-        #Link 2, Link 3...
-        
+        #Link 2
+        T21 = dh(q[1], d[1], a[1], al[1])
+        T20 = T10 @ T21
+        T2S = T0S @ T20
+        TL21 = np.identity(4)
+        TL21[:3, :3] = rotz(np.pi/2)  
+        TL2S = T2S @ TL21 
+        vis.set_pose(self.link2, TL2S)
+
+        #Link3
+        T23 = dh(q[2], d[2], a[2], al[2])
+        T30 = T21 @ T23
+        T3S = T0S @ T30
+        TL32 = np.identity(4)
+        TL3S = T3S @ TL32
+        vis.set_pose(self.link3, TL3S)
+
         return TBS  
 
     
