@@ -97,9 +97,9 @@ def task0():
 class robot():
     def __init__(self, scene):
         #kinematic parameters:
-        q = np.array([0, np.pi/2, -np.pi/2, np.pi/2, 0, 0])
-        d = np.array([0, 0, 1, 0, 0, 0.95])
-        a = np.array([0, -0.46, 0, 0.64, 0, 0])
+        q = np.array([0, np.pi/2, 0, -np.pi/2, 0, 0])
+        d = np.array([0, 0.150, 0, 0, 0, 0.95])
+        a = np.array([0, 0.614, 0.155, 0.64, 0, 0])
         al = np.array([-np.pi/2, 0, 0, np.pi/2, -np.pi/2, 0])
 
         self.DH = np.stack((q, d, a, al), 1)
@@ -116,16 +116,29 @@ class robot():
         self.link1 = vis.cylinder(0.13, 0.3)
         #self.link1 = vis.cube(0.26, 0.67, 0.26)
         s.add_actor(self.link1) 
-        
+
         #Link 2
         self.link2 = vis.cylinder(0.1, 0.614)
-        s.add_actor(self.link2) 
+        s.add_actor(self.link2)
 
         #Link 3
-        self.link3 = vis.cube(0.3, 0.3, 0.3)
+        self.link3 = vis.cylinder(0.1, 0.3)
         s.add_actor(self.link3)
-        
+
+        #Link 4
+        self.link4 = vis.cylinder(0.08, 0.155)
+        s.add_actor(self.link4)
+
+        #Link 5
+        self.link5 = vis.cylinder(0.1, 0.4)
+        s.add_actor(self.link5)
+
+        #Link 6
+        self.link6 = vis.cylinder(0.05, 0.095)
+        s.add_actor(self.link6)
+
         # Tool.
+        self.tool = tool(s)
 
         
     def set_configuration(self, q, g, T0S):
@@ -141,28 +154,85 @@ class robot():
         vis.set_pose(self.base, TBS)
 
         # Link 1.
-        T10 = dh(q[0], d[0], a[0], al[0]) #todo: create dh function
+        T10 = dh(q[0], d[0], a[0], al[0]) 
         T1S = T0S @ T10
         TL11 = np.identity(4)    
         TL1S = T1S @ TL11
         vis.set_pose(self.link1, TL1S)
         
-        #Link 2
+        # Link 2
         T21 = dh(q[1], d[1], a[1], al[1])
         T20 = T10 @ T21
         T2S = T0S @ T20
         TL21 = np.identity(4)
-        TL21[:3, :3] = rotz(np.pi/2)  
-        TL2S = T2S @ TL21 
+        TL21[:3, :3] = rotz(np.pi/2)
+        move_z = -1.0       
+        move_y = -0.15      
+        TL21[:3, 3] = np.array([move_z, 0, move_y])
+        TL2S = T2S @ TL21
         vis.set_pose(self.link2, TL2S)
 
-        #Link3
-        T23 = dh(q[2], d[2], a[2], al[2])
-        T30 = T21 @ T23
+        # Link 3
+        T32 = dh(q[2], d[2], a[2], al[2])
+        T30 = T10 @ T21 @ T32
         T3S = T0S @ T30
         TL32 = np.identity(4)
+        TL32[:3, :3] = rotx(np.pi/2)
+        move_y = -1.4 # pomiče se po Z osi scene
+        move_z = -0.1
+        move_x = -0.15
+        TL32[:3, 3] = np.array([move_x, move_y, move_z])
         TL3S = T3S @ TL32
         vis.set_pose(self.link3, TL3S)
+
+        # Link 4
+        T43 = dh(q[3], d[3], a[3], al[3])
+        T40 = T10 @ T21 @ T32 @ T43
+        T4S = T0S @ T40
+        TL43 = np.identity(4)
+        move_z = -0.79
+        move_y = 0.121 # pomiče se po Y osi scene
+        move_x = 1.4 #pomiče se po Z osi scene
+        TL43[:3, 3] = np.array([move_z, move_y, move_x])
+        TL4S = T4S @ TL43
+        vis.set_pose(self.link4, TL4S)
+
+        # Link 5
+        T54 = dh(q[4], d[4], a[4], al[4])
+        T50 = T10 @ T21 @ T32 @ T43 @ T54
+        T5S = T0S @ T50
+        TL54 = np.identity(4)
+        TL54[:3, :3] = rotx(np.pi/2)
+        move_z = -0.79 # pomiče po X osi scene
+        move_y = -1.4 # pomiče se po z osi scene
+        move_x = 0.4 #pomiče se po y osi scene
+        TL54[:3, 3] = np.array([move_z, move_y, move_x])
+        TL5S = T5S @ TL54
+        vis.set_pose(self.link5, TL5S)
+
+        # Link 6
+        T65 = dh(q[5], d[5], a[5], al[5])
+        T60 = T10 @ T21 @ T32 @ T43 @ T54 @ T65
+        T6S = T0S @ T60
+        TL65 = np.identity(4)
+        TL65[:3, :3] = rotx(np.pi/2)
+        move_z = -0.79 # pomiče po X osi scene
+        move_y = -1.4 # pomiče se po z osi scene
+        move_x = -0.3 #pomiče se po y osi scene
+        TL65[:3, 3] = np.array([move_z, move_y, move_x])
+        TL6S = T6S @ TL65
+        vis.set_pose(self.link6, TL6S)
+
+
+        # Tool.
+        TGS = T6S
+        TGS = np.identity(4)
+        TGS[:3, :3] = rotx(-np.pi/2)
+        move_y = 0.95
+        move_x = 1.235
+        move_z = 0
+        TGS[:3, 3] = np.array([move_z, move_y, move_x])
+        self.tool.set_configuration(g, TGS)
 
         return TBS  
 
