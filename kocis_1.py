@@ -12,6 +12,7 @@ from PIL import Image
 #from camerasim import CameraSimulator
 from skimage import feature
 from skimage.transform import hough_line, hough_line_peaks
+import math
 
 # TASK 0
 class tool():
@@ -98,8 +99,8 @@ class robot():
     def __init__(self, scene):
         #kinematic parameters:
         q = np.array([0, np.pi/2, 0, -np.pi/2, 0, 0])
-        d = np.array([0, 0.150, 0, 0, 0, 0.95])
-        a = np.array([0, 0.614, 0.155, 0.64, 0, 0])
+        d = np.array([0, 0, 1.294, -1.294, 1.294, 0])
+        a = np.array([0, 0.45, 0, 0.23, 0.13, 0.38])
         al = np.array([-np.pi/2, 0, 0, np.pi/2, -np.pi/2, 0])
 
         self.DH = np.stack((q, d, a, al), 1)
@@ -124,7 +125,7 @@ class robot():
         #Link 3
         self.link3 = vis.cylinder(0.1, 0.3)
         s.add_actor(self.link3)
-
+        
         #Link 4
         self.link4 = vis.cylinder(0.08, 0.155)
         s.add_actor(self.link4)
@@ -140,7 +141,6 @@ class robot():
         # Tool.
         self.tool = tool(s)
 
-        
     def set_configuration(self, q, g, T0S):
         d = self.DH[:,1]
         a = self.DH[:,2]
@@ -166,22 +166,18 @@ class robot():
         T2S = T0S @ T20
         TL21 = np.identity(4)
         TL21[:3, :3] = rotz(np.pi/2)
-        move_z = -1.0       
-        move_y = -0.15      
-        TL21[:3, 3] = np.array([move_z, 0, move_y])
+        TL21[:3, 3] = [-a[1]*2, 0, 0]
         TL2S = T2S @ TL21
         vis.set_pose(self.link2, TL2S)
+        
 
         # Link 3
         T32 = dh(q[2], d[2], a[2], al[2])
         T30 = T10 @ T21 @ T32
         T3S = T0S @ T30
         TL32 = np.identity(4)
-        TL32[:3, :3] = rotx(np.pi/2)
-        move_y = -1.4 # pomiče se po Z osi scene
-        move_z = -0.1
-        move_x = -0.15
-        TL32[:3, 3] = np.array([move_x, move_y, move_z])
+        TL32[:3, :3] = rotz(np.pi/2)
+        TL32[:3, 3] = [0, -d[2], -d[2]]
         TL3S = T3S @ TL32
         vis.set_pose(self.link3, TL3S)
 
@@ -190,10 +186,8 @@ class robot():
         T40 = T10 @ T21 @ T32 @ T43
         T4S = T0S @ T40
         TL43 = np.identity(4)
-        move_z = -0.79
-        move_y = 0.121 # pomiče se po Y osi scene
-        move_x = 1.4 #pomiče se po Z osi scene
-        TL43[:3, 3] = np.array([move_z, move_y, move_x])
+        TL43[:3, :3] = rotz(np.pi/2)
+        TL43[:3, 3] = [0, 0, -d[3]]
         TL4S = T4S @ TL43
         vis.set_pose(self.link4, TL4S)
 
@@ -202,11 +196,8 @@ class robot():
         T50 = T10 @ T21 @ T32 @ T43 @ T54
         T5S = T0S @ T50
         TL54 = np.identity(4)
-        TL54[:3, :3] = rotx(np.pi/2)
-        move_z = -0.79 # pomiče po X osi scene
-        move_y = -1.4 # pomiče se po z osi scene
-        move_x = 0.4 #pomiče se po y osi scene
-        TL54[:3, 3] = np.array([move_z, move_y, move_x])
+        TL54[:3, :3] = rotz(np.pi/2)
+        TL54[:3, 3] = [a[4], 0, 0]
         TL5S = T5S @ TL54
         vis.set_pose(self.link5, TL5S)
 
@@ -215,23 +206,18 @@ class robot():
         T60 = T10 @ T21 @ T32 @ T43 @ T54 @ T65
         T6S = T0S @ T60
         TL65 = np.identity(4)
-        TL65[:3, :3] = rotx(np.pi/2)
-        move_z = -0.79 # pomiče po X osi scene
-        move_y = -1.4 # pomiče se po z osi scene
-        move_x = -0.3 #pomiče se po y osi scene
-        TL65[:3, 3] = np.array([move_z, move_y, move_x])
+        TL65[:3, :3] = rotz(np.pi/2)
+        TL65[:3, 3] = [0, 0, 0]
         TL6S = T6S @ TL65
         vis.set_pose(self.link6, TL6S)
 
-
         # Tool.
-        TGS = T6S
-        TGS = np.identity(4)
-        TGS[:3, :3] = rotx(-np.pi/2)
-        move_y = 0.95
-        move_x = 1.235
-        move_z = 0
-        TGS[:3, 3] = np.array([move_z, move_y, move_x])
+        TGS = T6S.copy() 
+        TGS = np.identity(4) 
+        move_tool = np.identity(4) 
+        move_tool[:3, :3] = roty(np.pi/2) 
+        move_tool[:3, 3] = [0.15, 0, 0] 
+        TGS = T6S @ move_tool 
         self.tool.set_configuration(g, TGS)
 
         return TBS  
@@ -274,7 +260,7 @@ def task1(q):
 
 def main():
     #task0()
-    task1([0, np.pi/2, -np.pi/2, 0, 0, 0])
+    task1([0, math.radians(-180), -np.pi/2, 0, 0, 0])
 
 
 if __name__ == '__main__':
