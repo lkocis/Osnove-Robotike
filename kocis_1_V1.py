@@ -10,8 +10,8 @@ from planecontact import planecontact
 from scipy import ndimage
 from PIL import Image
 #from camerasim import CameraSimulator
-from skimage import feature
-from skimage.transform import hough_line, hough_line_peaks
+#from skimage import feature
+#from skimage.transform import hough_line, hough_line_peaks
 import math
 
 # TASK 0
@@ -98,10 +98,10 @@ def task0():
 class robot():
     def __init__(self, scene):
         #kinematic parameters:
-        q = np.array([0, np.pi/2, np.pi/2, np.pi/2, 0, 0])
+        q = np.array([np.pi/2, np.pi/2, np.pi/2, 0, 0, -np.pi/2])
         d = np.array([0, 0, 0, 0.640, 0, 0.095])
-        a = np.array([0.155, 0.614, 0.15, 0, 0, 0])
-        al = np.array([np.pi/2, 0, np.pi/2, -np.pi/2, np.pi/2, 0])
+        a = np.array([-0.15, 0.614, 0.230, 0, 0, 0])
+        al = np.array([np.pi/2, 0, -np.pi/2, np.pi/2, -np.pi/2, 0])
 
         self.DH = np.stack((q, d, a, al), 1)
     
@@ -109,28 +109,34 @@ class robot():
 
         
         # Base.
-        self.base = vis.cube(0.39, 0.3, 0.15)
+        #self.base = vis.cylinder(0.025, 0.05)
+        self.base = vis.cube(0.3, 0.3, 0.15)
         s.add_actor(self.base)  
 
         # Link 1.
         self.link1 = vis.cylinder(0.13, 0.3)
+        #self.link1 = vis.cube(0.26, 0.67, 0.26)
         s.add_actor(self.link1) 
 
         # Link 2.
-        self.link2 = vis.cylinder(0.08, 0.614)
+        self.link2 = vis.cylinder(0.10, 0.614)
         s.add_actor(self.link2)
 
         # Link 3.
-        self.link3 = vis.cube(0.23, 0.13, 0.381)
+        self.link3 = vis.cylinder(0.10, 0.25)
         s.add_actor(self.link3)
 
         # Link 4.
-        self.link4 = vis.cylinder(0.065, 0.640)    
+        self.link4 = vis.cylinder(0.08, 0.640)    
         s.add_actor(self.link4)
 
         # Link 5.
-        self.link5 = vis.cylinder(0.05, 0.095)
+        self.link5 = vis.cylinder(0.06, 0.095)
         s.add_actor(self.link5)
+
+        # Link 6.
+        self.link6 = vis.cylinder(0.05, 0.095)
+        s.add_actor(self.link6)
 
         # Tool.
         self.tool = tool(scene)
@@ -147,15 +153,15 @@ class robot():
         # Base.
         TB0 = np.identity(4)
         #TB0[:3,:3] = rotx(np.pi/2)
-        TB0[2,3] = -0.38
+        TB0[2,3] = 0.075
         TBS = T0S @ TB0
         vis.set_pose(self.base, TBS)
 
         # Link 1.
         T10 = dh(q[0], d[0], a[0], al[0]) 
-        T1S = T0S @ T10
+        T1S = TBS @ T10
         TL11 = np.identity(4) 
-        TL11[1,3] = -0.155
+        TL11[1,3] = -a[0]/2
         TL1S = T1S @ TL11
         vis.set_pose(self.link1, TL1S)
 
@@ -163,8 +169,8 @@ class robot():
         T21 = dh(q[1], d[1], a[1], al[1]) 
         T2S = T1S @ T21
         TL22 = np.identity(4)
-        TL22[:3, :3] = rotz(np.pi/2)
-        TL22[0, 3] = -0.614/2
+        TL22[:3,:3] = rotz(np.pi/2)
+        TL22[0,3] = -0.08
         TL2S = T2S @ TL22
         vis.set_pose(self.link2, TL2S)
 
@@ -172,7 +178,8 @@ class robot():
         T32 = dh(q[2], d[2], a[2], al[2]) 
         T3S = T2S @ T32
         TL33 = np.identity(4) 
-        TL33[0, 3] = -0.04
+        TL33[:3, :3] = rotx(np.pi/2)
+        #TL33[0,3] = a[3]
         TL3S = T3S @ TL33
         vis.set_pose(self.link3, TL3S)
 
@@ -180,7 +187,7 @@ class robot():
         T43 = dh(q[3], d[3], a[3], al[3])
         T4S = T3S @ T43
         TL44 = np.identity(4)
-        TL44[1, 3] = 0.640/2
+        TL44[1, 3] = -a[2]
         TL4S = T4S @ TL44
         vis.set_pose(self.link4, TL4S)
 
@@ -189,25 +196,33 @@ class robot():
         T5S = T4S @ T54
         TL55 = np.identity(4)
         TL55[:3, :3] = rotx(np.pi/2)
-        TL55[2, 3] = 0.095/2
+        TL55[2, 3] = d[5]
         TL5S = T5S @ TL55
         vis.set_pose(self.link5, TL5S)
 
-        # Tool - Link 6
+        # Link 6
         T65 = dh(q[5], d[5], a[5], al[5])
         T6S = T5S @ T65
+        TL66 = np.identity(4)
+        TL66[:3, :3] = rotx(np.pi/2)
+        TL66[2, 3] = d[5]
+        TL6S = T6S @ TL66
+        vis.set_pose(self.link6, TL6S)
+
+        # Tool
         tool_offset = np.identity(4)
-        tool_offset[2, 3] = 0.1
+        tool_offset[2, 3] = d[5]*2 + 0.05
         TGS = T6S @ tool_offset
         self.tool.set_configuration(g, TGS)
 
-        # Cube
-        TCG = np.identity(4)
-        TCS = TGS @ TCG
-        vis.set_pose(self.cube, TCS)
+        #Cube
+        cube_move = np.identity(4)
+        cube_move[2, 3] = d[5] * 2 + 0.05
+        TC6 = T6S @ cube_move
+        vis.set_pose(self.cube, TC6)
 
         np.set_printoptions(precision=4, suppress=True)
-        print(TCS)
+        print(TGS)
 
         return TBS  
 
@@ -240,8 +255,7 @@ def task1(q):
     
     # Robot.
     T0S = np.identity(4)
-    T0S[2,3] = 0.45
-    T0S[0,3] = 0.15
+    #T0S[2,3] = 0.45
     rob = robot(s)
     rob.set_configuration(q, 0.03, T0S)
     
@@ -250,7 +264,8 @@ def task1(q):
 
 def main():
     #task0()
-    task1([0, np.pi/2, 0, np.pi/2, 0, 0])
+    task1([0, np.pi/2, 0, 0, np.pi/2, 0])
+
 
 if __name__ == '__main__':
     main()
