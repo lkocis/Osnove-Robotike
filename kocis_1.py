@@ -207,7 +207,7 @@ class robot():
         vis.set_pose(self.cube, TCS)
 
         np.set_printoptions(precision=4, suppress=True)
-        print(TCS)
+        print(TGS)
 
         return TBS  
 
@@ -250,7 +250,7 @@ def task1(q):
 
 def main():
     #task0()
-    task1([0, np.pi/2, 0, np.pi/2, 0, 0])
+    task1([0, np.pi/2, 0, np.pi/2, 0,0])
 
 if __name__ == '__main__':
     main()

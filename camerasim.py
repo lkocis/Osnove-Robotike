@@ -1,6 +1,16 @@
 import numpy as np
 from scipy import ndimage
-import br_lectures as br
+#import br_lectures as br
+
+
+def rotz(alpha):
+	c = np.cos(alpha)
+	s = np.sin(alpha)
+	return np.array([
+		[ c, -s, 0],
+		[ s,  c, 0],
+		[ 0,  0, 1]
+	])
 
 class CameraSimulator():
 	def __init__(self, camera, height, box_size, noise):
@@ -8,6 +18,7 @@ class CameraSimulator():
 		self.height = height
 		self.box_size = box_size
 		self.noise = noise
+
 
 	def get_image(self):
 		img_w = self.camera['img_size'][0]
@@ -17,7 +28,7 @@ class CameraSimulator():
 		img_region = np.array([[0, 0], [img_w-1, img_h-1]])
 		box_size = np.array([box_half_w, box_half_h])
 		self.alpha = np.pi/2 * (2 * np.random.rand() - 1)
-		R = br.rotz(self.alpha)
+		R = rotz(self.alpha)
 		R = R[:2,:2]
 		vertices_nrm = np.array([[1, 1], [-1, 1], [-1, -1], [1, -1]])
 		vertices = vertices_nrm * box_size @ R.T

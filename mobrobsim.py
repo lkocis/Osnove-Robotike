@@ -1,7 +1,7 @@
 import numpy as np
 from scipy import integrate
 import matplotlib.pyplot as plt
-import br_lectures as br
+#import br_lectures as br
 import vtk
 import vtk_visualizer as vis
 
