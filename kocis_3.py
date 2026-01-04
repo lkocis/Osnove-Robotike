@@ -334,125 +334,157 @@ class simulator():
 		iren.GetRenderWindow().Render()
 		self.timer_count += 1
 
-def task3_star():
-    # Scene
-    s = vis.visualizer()
+def task3():
+	# Scene
+	s = vis.visualizer()
 
-    # Floor.
-    set_floor(s, [1, 1])
-    
-    # Robot.
-    rob = robot(s)
-    
-    # Robot velocity and acceleration limits.
-    dqgr=np.pi*np.ones((1,6))
-    ddqgr=10*np.pi*np.ones((1,6))
-    
-    # Trajectory.
-    q_home = np.array([-np.pi/2, np.pi/2, 0, 0, 0, 0])
-    
-    # --- NOVE DEFINICIJE ZA PUTANJU ZVIJEZDE ---
-    
-    # Parametri za crtanje zvijezde
-    center_x, center_y = 0.25, 0.0 # Centar zvijezde
-    radius_outer = 0.15 # Vanjski radijus
-    radius_inner = 0.06 # Unutarnji radijus (za petokraku)
-    lift_Z = 0.2      # Z koordinata za podizanje alata (iznad ploče)
-    draw_Z = 0.02     # Z koordinata za crtanje (na ploči)
-    
-    # Inicijalna transformacija (Orijentacija alata)
-    T_base = np.identity(4)
-    T_base[:3,:3] = roty(np.pi) # Zadržavamo istu orijentaciju alata
-    
-    # Generiranje 5 točaka (vrhova) zvijezde u 2D (X, Y)
-    star_points_xy = []
-    
-    # 5 vanjskih vrhova (naizmjence)
-    for i in range(5):
-        angle_outer = np.pi/2 - i * 2 * np.pi / 5 # Počinje gore
-        x_outer = center_x + radius_outer * np.cos(angle_outer)
-        y_outer = center_y + radius_outer * np.sin(angle_outer)
-        star_points_xy.append((x_outer, y_outer))
-
-    # Definiramo SVE točke (uključujući lift i spuštanje)
-    # 1. Početna pozicija LIFT (iznad prvog vrha)
-    T_start_lift = T_base.copy()
-    T_start_lift[:3,3] = np.array([star_points_xy[0][0], star_points_xy[0][1], lift_Z])
-    q_start_lift = invkin(rob.DH, T_start_lift, [1, 0, 0])
-
-    # 2. Spuštanje na prvu točku (crtanje)
-    T1 = T_base.copy()
-    T1[:3,3] = np.array([star_points_xy[0][0], star_points_xy[0][1], draw_Z])
-    q1 = invkin(rob.DH, T1, [1, 0, 0])
-
-    # Srednje točke (prelazeći između svih 5 vrhova za crtanje linija)
-    # Zvijezda se crta spajanjem svakog drugog vrha: 1->3->5->2->4->1
-    star_draw_order = [0, 2, 4, 1, 3, 0]
-    
-    # Generiranje q2 do q6 (5 vrhova za crtanje + povratak na početni vrh)
-    Q_draw = []
-    for i in star_draw_order[1:]: # Krećemo od drugog vrha u nizu (index 2)
-        idx = star_draw_order[i]
-        T_curr = T_base.copy()
-        T_curr[:3,3] = np.array([star_points_xy[idx][0], star_points_xy[idx][1], draw_Z])
-        q_curr = invkin(rob.DH, T_curr, [1, 0, 0])
-        Q_draw.append(q_curr)
-    
-    # 3. Podizanje alata (lift) nakon završetka crtanja
-    T_end_lift = T_base.copy()
-    T_end_lift[:3,3] = np.array([star_points_xy[0][0], star_points_xy[0][1], lift_Z])
-    q_end_lift = invkin(rob.DH, T_end_lift, [1, 0, 0])
-
-    # Kombiniranje svih točaka putanje
-    # q_home -> q_start_lift -> q1 (1. vrh) -> q2 (3. vrh) -> ... -> q6 (1. vrh) -> q_end_lift -> q_home
-    
-    Q_points = [q_home, q_start_lift, q1] + Q_draw + [q_end_lift, q_home]
-    Q = np.stack(tuple(Q_points), 1)
-
-    # --- KRAJ IZMJENA ---
-
-    Ts = 0.01
-    Qc, dQc, ddQc, tc = hocook(Q, dqgr, ddqgr, Ts)
-    
-    # Display trajectory.
-    plt.plot(tc,Qc[0,:],tc,Qc[1,:],tc,Qc[2,:],tc,Qc[3,:],tc,Qc[4,:],tc,Qc[5,:])
-    plt.show()
-    plt.plot(tc,dQc[0,:],tc,dQc[1,:],tc,dQc[2,:],tc,dQc[3,:],tc,dQc[4,:],tc,dQc[5,:])
-    plt.show()
-    plt.plot(tc,ddQc[0,:],tc,ddQc[1,:],tc,ddQc[2,:],tc,ddQc[3,:],tc,ddQc[4,:],tc,ddQc[5,:])
-    plt.show()
-    
-    # Create animation callback.
-    sim = simulator(rob, Qc)
-    
-    # Start animation.
-    s.run(animation_timer_callback=sim.execute)
-    
-    # Display tool trajectory in 3D.
-    trajW = np.array(sim.trajW)
-    tool_tip_W = trajW[:,:3,3]
-    ax = plt.axes(projection='3d')
-    ax.plot3D(tool_tip_W[:,0], tool_tip_W[:,1], tool_tip_W[:,2], 'b')
-    plt.show()
-    
-    # Display plane contact.
-    n_board = np.array([0, 0, 1])
-    d_board = 0.02
-    board_draw = planecontact(tool_tip_W, n_board, d_board)
-    fig, ax = plt.subplots(1, 1)
-    ax.plot(board_draw[:,0], board_draw[:,1], 'b.')
-    ax.axis('equal')
-    plt.show()
-        
-    return tool_tip_W
+	# Floor.
+	set_floor(s, [1, 1])
 	
+	# Robot.
+	rob = robot(s)
+	
+	# Robot velocity and acceleration limits.
+	dqgr=np.pi*np.ones((1,6))
+	ddqgr=10*np.pi*np.ones((1,6))
+	
+	# Trajectory.
+	q_home = np.array([-np.pi/2, np.pi/2, 0, 0, 0, 0])
+
+	center_x, center_y = 0.30, 0.0 # Centar na X=0.3
+	R_star = 0.15                   # Polumjer zvijezde
+	Z_low = 0.02                    # Visina kontakta (crtanje)
+	Z_high = 0.01                 # Visina prijelaza (podizanje)
+
+	# Definiranje bazne transformacije za roty(pi)
+	T60_base = np.identity(4)
+	T60_base[:3,:3] = roty(np.pi)
+
+	# Nizovi za X i Y koordinate 5 vrhova
+	angles = np.deg2rad(np.linspace(90, 90 + 360, 5, endpoint=False))
+	star_x = center_x + R_star * np.cos(angles)
+	star_y = center_y + R_star * np.sin(angles)
+
+	# --- Q1: Početna visoka točka (Iznad prvog vrha) ---
+	T60_1 = T60_base.copy()
+	T60_1[:3,3] = np.array([star_x[0], star_y[0], Z_high]) 
+	q1 = invkin(rob.DH, T60_1, [1, 0, 0])
+
+	# --- Q2: Spuštanje (1. Vrh Zvijezde) ---
+	T60_2 = T60_1.copy() 
+	T60_2[:3,3] = np.array([star_x[0], star_y[0], Z_low]) 
+	q2 = invkin(rob.DH, T60_2, [1, 0, 0])
+
+	# --- Q3: Crtanje (2. Vrh - Preskačemo jedan, idemo na indeks 2) ---
+	# Putanja je 0 -> 2
+	T60_3 = T60_2.copy() 
+	T60_3[:3,3] = np.array([star_x[2], star_y[2], Z_low]) 
+	q3 = invkin(rob.DH, T60_3, [1, 0, 0])
+
+	# --- Q4: Podizanje (Iznad 2. Vrha) ---
+	T60_4 = T60_3.copy()
+	T60_4[:3,3] = np.array([star_x[2], star_y[2], Z_high]) 
+	q4 = invkin(rob.DH, T60_4, [1, 0, 0])
+
+	# --- Q5: Prijelaz (3. Vrh - Indeks 4) ---
+	# Putanja je 2 -> 4
+	T60_5 = T60_4.copy() 
+	T60_5[:3,3] = np.array([star_x[4], star_y[4], Z_low]) 
+	q5 = invkin(rob.DH, T60_5, [1, 0, 0])
+
+	# --- Q6: Podizanje (Iznad 3. Vrha) ---
+	T60_6 = T60_5.copy()
+	T60_6[:3,3] = np.array([star_x[4], star_y[4], Z_high]) 
+	q6 = invkin(rob.DH, T60_6, [1, 0, 0])
+
+	# --- Q7: Prijelaz (4. Vrh - Indeks 1) ---
+	# Putanja je 4 -> 1
+	T60_7 = T60_6.copy() 
+	T60_7[:3,3] = np.array([star_x[1], star_y[1], Z_low]) 
+	q7 = invkin(rob.DH, T60_7, [1, 0, 0])
+
+	# --- Q8: Podizanje (Iznad 4. Vrha) ---
+	T60_8 = T60_7.copy()
+	T60_8[:3,3] = np.array([star_x[1], star_y[1], Z_high]) 
+	q8 = invkin(rob.DH, T60_8, [1, 0, 0])
+
+	# --- Q9: Prijelaz (5. Vrh - Indeks 3) ---
+	# Putanja je 1 -> 3
+	T60_9 = T60_8.copy() 
+	T60_9[:3,3] = np.array([star_x[3], star_y[3], Z_low]) 
+	q9 = invkin(rob.DH, T60_9, [1, 0, 0])
+
+	# --- Q10: Crtanje, Zatvaranje (1. Vrh - Indeks 0) ---
+	# Putanja je 3 -> 0 (Zatvaramo zvijezdu)
+	T60_10 = T60_9.copy() 
+	T60_10[:3,3] = np.array([star_x[0], star_y[0], Z_low]) 
+	q10 = invkin(rob.DH, T60_10, [1, 0, 0])
+
+	# --- Q11: Sigurnosno podizanje (Iznad 1. Vrha) ---
+	T60_11 = T60_10.copy()
+	T60_11[:3,3] = np.array([star_x[0], star_y[0], Z_high]) 
+	q11 = invkin(rob.DH, T60_11, [1, 0, 0])
+
+	Q = np.stack((q_home, q1, q2, q3, q4, q5, q6, q7, q8, q9, q10, q11, q_home), 1)
+	Ts = 0.03
+	Qc, dQc, ddQc, tc = hocook(Q, dqgr, ddqgr, Ts)
+
+	# Display trajectory
+	plt.figure()
+	plt.plot(tc, Qc[0,:], tc, Qc[1,:], tc, Qc[2,:], tc, Qc[3,:], tc, Qc[4,:], tc, Qc[5,:])
+	plt.title("Joint positions")
+	plt.show()
+
+	plt.figure()
+	plt.plot(tc, dQc[0,:], tc, dQc[1,:], tc, dQc[2,:], tc, dQc[3,:], tc, dQc[4,:], tc, dQc[5,:])
+	plt.title("Joint velocities")
+	plt.show()
+
+	plt.figure()
+	plt.plot(tc, ddQc[0,:], tc, ddQc[1,:], tc, ddQc[2,:], tc, ddQc[3,:], tc, ddQc[4,:], tc, ddQc[5,:])
+	plt.title("Joint accelerations")
+	plt.show()
+
+	# Create animation callback
+	sim = simulator(rob, Qc)
+	s.run(animation_timer_callback=sim.execute)
+
+	# Display tool trajectory in 3D
+	trajW = np.array(sim.trajW)
+	tool_tip_W = trajW[:,:3,3]
+
+	z_coords = tool_tip_W[:, 2]
+	print(f"Minimalna Z-koordinata putanje: {np.min(z_coords)}")
+	print(f"Maksimalna Z-koordinata putanje: {np.max(z_coords)}")
+	print(f"Prosječna Z-koordinata putanje: {np.mean(z_coords)}")
+
+	fig = plt.figure()
+	ax = fig.add_subplot(111, projection='3d')
+	ax.plot3D(tool_tip_W[:,0], tool_tip_W[:,1], tool_tip_W[:,2], 'b')
+	ax.set_xlabel("X")
+	ax.set_ylabel("Y")
+	ax.set_zlabel("Z")
+	plt.title("Tool Tip Trajectory")
+	plt.show()
+
+	# Display plane contact
+	n_board = np.array([0, 0, 1])
+	d_board = 0.07
+	board_draw = planecontact(tool_tip_W, n_board, d_board)
+	fig, ax = plt.subplots()
+	ax.plot(board_draw[:,0], board_draw[:,1], 'b.')
+	ax.axis('equal')
+	plt.title("Plane Contact Points")
+	plt.show()
+
+	return tool_tip_W
 
 
 def main():
 	#task0()
 	#task1([0, np.pi/2, -np.pi/2, 0, 0, 0])
 	#task2([0, 1, 0])
-	task3_star()
+	task3()
 
 
 if __name__ == '__main__':

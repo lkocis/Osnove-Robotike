@@ -410,42 +410,13 @@ def imgproc(RGB, camera, camera_height, box_size):
 	img_h = camera['img_size'][1]
 	box_w = box_size[0]
 	box_h = box_size[1]
-
-	f = camera['focal_length']
-	u_c, v_c = camera['principal_point']
-
-	fig, axes = plt.subplots(1, 3, figsize=(15, 5))
-    
-    # 1. Prikaz ulazne slike
-	axes[0].imshow(RGB)
-	axes[0].set_title('Input Image (RGB)')
-
-	E = feature.canny(RGB[:,:,0]) 
-	axes[1].imshow(E, cmap='gray')
-	axes[1].set_title('Edge Image (Canny)')
-
-	H, theta, d = hough_line(E)	# primjenjuje Hough transformaciju za detekciju linija na binarnoj slici rubova
-	# H predstavlja akumulacijsku matricu, theta su kutovi između linije i njezine normale, 
-	# d su udaljenosti linija od ishodišta
-
-	#accumulators, angles, distances = hough_line_peaks(H, theta, d, min_distance=20, min_angle=20, threshold=50)
-
-	detected_angles = []
+	plt.imshow(RGB)
+	E=feature.canny(RGB[:,:,0])	
+	H, theta, d = hough_line(E)	
 	counter = 0
-
-	axes[2].imshow(RGB.copy()) 
-	axes[2].set_title('Detected Lines & Pose')
-
 	for _, angle, dist in zip(*hough_line_peaks(H, theta, d, min_distance=20, min_angle=20, threshold=50)):
-		# hough_line_peaks vraća maksimume iz H niza tj. najizraženije linije iz Houghove transformacije
-		# threshold filtrira slabije izražene linije i šum
-		# min_distance i min_angle sprječavaju detekciju linija koje su preblizu 
-		# ili previše slične već detektiranim linijama
 
-		if counter < 4:
-			detected_angles.append(angle) #kut između pozitivnog smjera x osi slike i normale linije (okomice iz ishodišta do linije)
-
-		# Ovaj dio konvertira liniju iz H prostora u koordinate piksela (u, v) da bi se mogla nacrtati preko slike.
+		
 		#print('angle=%f, dist=%f' % (angle, dist))
 		cs = np.cos(angle)
 		sn = np.sin(angle)
@@ -455,66 +426,25 @@ def imgproc(RGB, camera, camera_height, box_size):
 		else:
 			u = np.array([0, img_w-1])
 			v = (dist - cs * u) / sn
-		plt.plot(u, v, 'g')	 # crta zelena linije
-		counter += 1
-		
+		plt.plot(u, v, 'g')	
+
+		#####			
 	#Compute alpha:
 	alpha = 0
-	# 1. Izračunavanje orijentacije (alpha) - bitan je samo pravac, a ne smjer linije
-	if len(detected_angles) >= 2:
-		normalized_angles = np.array([a % np.pi for a in detected_angles])
+	######
+	# Visualize red line representing orientation:
 
-		# normaliziramo kutove u raspon [0, pi] 
-		# dozvoljava da se svi kutevi koji predstavljaju isti pravac svode na zajedničku vrijednost, 
-		# što omogućava njihovo grupiranje i izračunavanje pouzdanog prosječnog kuta
-		
-		ref_angle = normalized_angles[0]
-		angle_diffs = np.abs(normalized_angles - ref_angle)
-		angle_diffs[angle_diffs > np.pi/2] = np.pi - angle_diffs[angle_diffs > np.pi/2] 
+	# plt.plot(t_img[0],t_img[1],'r+')
+	# x_axis = np.stack((t_img, t_img + x * 150), 0)
+	# plt.plot(x_axis[:,0], x_axis[:,1], 'r-')	
+	# plt.show()
 
-		# izračunavamo apsolutne razlike između svakog kuta i referentnog kuta
-		# ako je razlika veća od 90 stupnjeva (π/2 radijana), prilagođavamo je tako da odražava manju kutnu razliku
-		# ovo je važno jer kutevi koji su 180 stupnjeva (π radijana) udaljeni predstavljaju isti pravac
-		
-		dominant_angles = normalized_angles[angle_diffs < np.deg2rad(10)] 
-		# Provjerava je li razlika u kutovima manja od 10 stupnjeva
-		
-		if len(dominant_angles) > 0:
-			alpha = np.mean(dominant_angles)
-			alpha = alpha + np.pi/2
-		else:
-			alpha = 0.0
-	else:
-		alpha = 0.0
+	######
 
-	# 2. Pronalaženje centra objekta u pikselima (t_img)
-	v_coords, u_coords = np.where(E > 0)
-	
-	if len(u_coords) > 0:
-		u_center = np.mean(u_coords)
-		v_center = np.mean(v_coords)
-	else:
-		u_center = u_c
-		v_center = v_c
-		
-	t_img = np.array([u_center, v_center])
-
-	print('alpha (deg) = %f' % np.rad2deg(alpha - np.pi))
-	print('t_img = [%f, %f]' % (t_img[0], t_img[1]))
-
-	axes[2].plot(t_img[0],t_img[1],'r+') # centar objekta
-    
-	plt.tight_layout() 
-	plt.show() 
-	
 	#Compute t:
-	z = camera_height
-	t_x = z * (u_center - u_c) / f
-	t_y = z * (v_center - v_c) / f
-	t_z = z
+	t=[0,0,0]
 
-	t = [t_x, t_y, t_z] #gdje se objekt nalazi s obzirom na kameru
-
+	######
 	return alpha, t
 	
 
