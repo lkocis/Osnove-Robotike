@@ -10,8 +10,8 @@ from mobrobsim import mobrobsimanimate, set_goal, set_map
 from scipy import ndimage
 from PIL import Image
 from camerasim import CameraSimulator
-from skimage import feature
-from skimage.transform import hough_line, hough_line_peaks
+#from skimage import feature
+#from skimage.transform import hough_line, hough_line_peaks
 
 # TASK 0
 class tool():
@@ -350,134 +350,207 @@ def task3():
 	
 	# Trajectory.
 	q_home = np.array([-np.pi/2, np.pi/2, 0, 0, 0, 0])
+	T60_1 = np.identity(4)
+	T60_1[:3,:3] = roty(np.pi)
+	T60_1[:3,3] = np.array([0.17, 0.03, 0.2]) # y koordinata - lijevo/desno kada smo ispred robota
+	q1 = invkin(rob.DH,T60_1,[1, 0, 0])
 
-	center_x, center_y = 0.30, 0.0 # Centar na X=0.3
-	R_star = 0.15                   # Polumjer zvijezde
-	Z_low = 0.02                    # Visina kontakta (crtanje)
-	Z_high = 0.01                 # Visina prijelaza (podizanje)
+	# Zvijezda
+	T60_2 = T60_1.copy()
+	T60_2[:3,3] = np.array([0.17, 0.03, 0.02]) 
+	q2 = invkin(rob.DH,T60_2,[1, 0, 0])
 
-	# Definiranje bazne transformacije za roty(pi)
-	T60_base = np.identity(4)
-	T60_base[:3,:3] = roty(np.pi)
+	T60_3 = T60_1.copy()
+	T60_3[:3,3] = np.array([0.21, 0.05, 0.02]) 
+	q3 = invkin(rob.DH,T60_3,[1, 0, 0])
 
-	# Nizovi za X i Y koordinate 5 vrhova
-	angles = np.deg2rad(np.linspace(90, 90 + 360, 5, endpoint=False))
-	star_x = center_x + R_star * np.cos(angles)
-	star_y = center_y + R_star * np.sin(angles)
+	T60_4 = T60_1.copy()
+	T60_4[:3,3] = np.array([0.17, 0.03, 0.2]) 
+	q4 = invkin(rob.DH,T60_4,[1, 0, 0])
 
-	# --- Q1: Početna visoka točka (Iznad prvog vrha) ---
-	T60_1 = T60_base.copy()
-	T60_1[:3,3] = np.array([star_x[0], star_y[0], Z_high]) 
-	q1 = invkin(rob.DH, T60_1, [1, 0, 0])
+	T60_5 = T60_1.copy()
+	T60_5[:3,3] = np.array([0.17, 0.03, 0.02]) 
+	q5 = invkin(rob.DH,T60_5,[1, 0, 0])
 
-	# --- Q2: Spuštanje (1. Vrh Zvijezde) ---
-	T60_2 = T60_1.copy() 
-	T60_2[:3,3] = np.array([star_x[0], star_y[0], Z_low]) 
-	q2 = invkin(rob.DH, T60_2, [1, 0, 0])
+	T60_6 = T60_1.copy()
+	T60_6[:3,3] = np.array([0.17, 0.07, 0.02]) 
+	q6 = invkin(rob.DH,T60_6,[1, 0, 0])
 
-	# --- Q3: Crtanje (2. Vrh - Preskačemo jedan, idemo na indeks 2) ---
-	# Putanja je 0 -> 2
-	T60_3 = T60_2.copy() 
-	T60_3[:3,3] = np.array([star_x[2], star_y[2], Z_low]) 
-	q3 = invkin(rob.DH, T60_3, [1, 0, 0])
+	T60_7 = T60_1.copy()
+	T60_7[:3,3] = np.array([0.2, 0.07, 0.2]) 
+	q7 = invkin(rob.DH,T60_7,[1, 0, 0])
 
-	# --- Q4: Podizanje (Iznad 2. Vrha) ---
-	T60_4 = T60_3.copy()
-	T60_4[:3,3] = np.array([star_x[2], star_y[2], Z_high]) 
-	q4 = invkin(rob.DH, T60_4, [1, 0, 0])
+	T60_8 = T60_1.copy()
+	T60_8[:3,3] = np.array([0.2, 0.07, 0.02]) 
+	q8 = invkin(rob.DH,T60_8,[1, 0, 0])
 
-	# --- Q5: Prijelaz (3. Vrh - Indeks 4) ---
-	# Putanja je 2 -> 4
-	T60_5 = T60_4.copy() 
-	T60_5[:3,3] = np.array([star_x[4], star_y[4], Z_low]) 
-	q5 = invkin(rob.DH, T60_5, [1, 0, 0])
+	T60_9 = T60_1.copy()
+	T60_9[:3,3] = np.array([0.2, 0.03, 0.02]) 
+	q9 = invkin(rob.DH,T60_9,[1, 0, 0])
 
-	# --- Q6: Podizanje (Iznad 3. Vrha) ---
-	T60_6 = T60_5.copy()
-	T60_6[:3,3] = np.array([star_x[4], star_y[4], Z_high]) 
-	q6 = invkin(rob.DH, T60_6, [1, 0, 0])
+	T60_10 = np.identity(4)
+	T60_10[:3,:3] = roty(np.pi)
+	T60_10[:3,3] = np.array([0.21, 0.05, 0.2]) 
+	q10 = invkin(rob.DH,T60_10,[1, 0, 0])
 
-	# --- Q7: Prijelaz (4. Vrh - Indeks 1) ---
-	# Putanja je 4 -> 1
-	T60_7 = T60_6.copy() 
-	T60_7[:3,3] = np.array([star_x[1], star_y[1], Z_low]) 
-	q7 = invkin(rob.DH, T60_7, [1, 0, 0])
-
-	# --- Q8: Podizanje (Iznad 4. Vrha) ---
-	T60_8 = T60_7.copy()
-	T60_8[:3,3] = np.array([star_x[1], star_y[1], Z_high]) 
-	q8 = invkin(rob.DH, T60_8, [1, 0, 0])
-
-	# --- Q9: Prijelaz (5. Vrh - Indeks 3) ---
-	# Putanja je 1 -> 3
-	T60_9 = T60_8.copy() 
-	T60_9[:3,3] = np.array([star_x[3], star_y[3], Z_low]) 
-	q9 = invkin(rob.DH, T60_9, [1, 0, 0])
-
-	# --- Q10: Crtanje, Zatvaranje (1. Vrh - Indeks 0) ---
-	# Putanja je 3 -> 0 (Zatvaramo zvijezdu)
-	T60_10 = T60_9.copy() 
-	T60_10[:3,3] = np.array([star_x[0], star_y[0], Z_low]) 
-	q10 = invkin(rob.DH, T60_10, [1, 0, 0])
-
-	# --- Q11: Sigurnosno podizanje (Iznad 1. Vrha) ---
 	T60_11 = T60_10.copy()
-	T60_11[:3,3] = np.array([star_x[0], star_y[0], Z_high]) 
-	q11 = invkin(rob.DH, T60_11, [1, 0, 0])
+	T60_11[:3,3] = np.array([0.21, 0.05, 0.02]) 
+	q11 = invkin(rob.DH,T60_11,[1, 0, 0])
 
-	Q = np.stack((q_home, q1, q2, q3, q4, q5, q6, q7, q8, q9, q10, q11, q_home), 1)
-	Ts = 0.03
+	T60_12 = T60_10.copy()
+	T60_12[:3,3] = np.array([0.17, 0.07, 0.02]) 
+	q12 = invkin(rob.DH,T60_12,[1, 0, 0])
+
+	T60_13 = T60_10.copy()
+	T60_13[:3,3] = np.array([0.2, 0.03, 0.2]) 
+	q13 = invkin(rob.DH,T60_13,[1, 0, 0])
+
+	T60_14 = T60_10.copy()
+	T60_14[:3,3] = np.array([0.2, 0.03, 0.02]) 
+	q14 = invkin(rob.DH,T60_14,[1, 0, 0])
+
+	T60_15 = T60_10.copy()
+	T60_15[:3,3] = np.array([0.16, 0.05, 0.02]) 
+	q15 = invkin(rob.DH,T60_15,[1, 0, 0])
+
+	T60_16 = T60_10.copy()
+	T60_16[:3,3] = np.array([0.2, 0.07, 0.2]) 
+	q16 = invkin(rob.DH,T60_16,[1, 0, 0])
+
+	T60_17 = T60_10.copy()
+	T60_17[:3,3] = np.array([0.2, 0.07, 0.02]) 
+	q17 = invkin(rob.DH,T60_17,[1, 0, 0])
+
+	T60_18 = T60_10.copy()
+	T60_18[:3,3] = np.array([0.16, 0.05, 0.02]) 
+	q18 = invkin(rob.DH,T60_18,[1, 0, 0])
+
+	#Krakovi
+	T60_19 = np.identity(4)
+	T60_19[:3,:3] = rotx(np.pi)
+	T60_19[:3,3] = np.array([0.17, 0.12, 0.2]) 
+	q19 = invkin(rob.DH,T60_19,[1, 0, 0])
+
+	T60_20 = T60_19.copy()
+	T60_20[:3,3] = np.array([0.17, 0.12, 0.02]) 
+	q20 = invkin(rob.DH,T60_20,[1, 0, 0])
+
+	T60_21 = T60_19.copy()
+	T60_21[:3,3] = np.array([0.17, 0.08, 0.02]) 
+	q21 = invkin(rob.DH,T60_21,[1, 0, 0])
+
+	T60_22 = T60_19.copy()
+	T60_22[:3,3] = np.array([0.185, 0.11, 0.2]) 
+	q22 = invkin(rob.DH,T60_22,[1, 0, 0])
+
+	T60_23 = T60_19.copy()
+	T60_23[:3,3] = np.array([0.185, 0.11, 0.02]) 
+	q23 = invkin(rob.DH,T60_23,[1, 0, 0])
+
+	T60_24 = T60_19.copy()
+	T60_24[:3,3] = np.array([0.185, 0.07, 0.02]) 
+	q24 = invkin(rob.DH,T60_24,[1, 0, 0])
+
+	T60_25 = T60_19.copy()
+	T60_25[:3,3] = np.array([0.2, 0.12, 0.2]) 
+	q25 = invkin(rob.DH,T60_25,[1, 0, 0])
+
+	T60_26 = T60_19.copy()
+	T60_26[:3,3] = np.array([0.2, 0.12, 0.02]) 
+	q26 = invkin(rob.DH,T60_26,[1, 0, 0])
+
+	T60_27 = T60_19.copy()
+	T60_27[:3,3] = np.array([0.2, 0.08, 0.02]) 
+	q27 = invkin(rob.DH,T60_27,[1, 0, 0])
+
+	Q = np.stack((q_home, q1, q2, q3, q4, q5, q6, q7, q8, q9, q10, q11, q12, q13, q14, q15, q16, q17, q18, q19, q20, q21, q22, q23, q24, q25, q26, q27, q_home), 1)
+	Ts = 0.01
 	Qc, dQc, ddQc, tc = hocook(Q, dqgr, ddqgr, Ts)
-
-	# Display trajectory
+	
+	# Display trajectory.
+	# Položaj zglobova u vremenu
 	plt.figure()
-	plt.plot(tc, Qc[0,:], tc, Qc[1,:], tc, Qc[2,:], tc, Qc[3,:], tc, Qc[4,:], tc, Qc[5,:])
-	plt.title("Joint positions")
+	plt.plot(tc, Qc[0,:], label='q1')
+	plt.plot(tc, Qc[1,:], label='q2')
+	plt.plot(tc, Qc[2,:], label='q3')
+	plt.plot(tc, Qc[3,:], label='q4')
+	plt.plot(tc, Qc[4,:], label='q5')
+	plt.plot(tc, Qc[5,:], label='q6')
+	plt.xlabel('Vrijeme [s]')
+	plt.ylabel('Položaj zglobova [rad]')
+	plt.title('Položaj zglobova u vremenu')
+	plt.legend()
+	plt.grid()
 	plt.show()
 
+	# Brzina zglobova u vremenu
 	plt.figure()
-	plt.plot(tc, dQc[0,:], tc, dQc[1,:], tc, dQc[2,:], tc, dQc[3,:], tc, dQc[4,:], tc, dQc[5,:])
-	plt.title("Joint velocities")
+	plt.plot(tc, dQc[0,:], label='dq1')
+	plt.plot(tc, dQc[1,:], label='dq2')
+	plt.plot(tc, dQc[2,:], label='dq3')
+	plt.plot(tc, dQc[3,:], label='dq4')
+	plt.plot(tc, dQc[4,:], label='dq5')
+	plt.plot(tc, dQc[5,:], label='dq6')
+	plt.xlabel('Vrijeme [s]')
+	plt.ylabel('Brzina zglobova [rad/s]')
+	plt.title('Brzine zglobova u vremenu')
+	plt.legend()
+	plt.grid()
 	plt.show()
 
+	# Ubrzanje zglobova u vremenu
 	plt.figure()
-	plt.plot(tc, ddQc[0,:], tc, ddQc[1,:], tc, ddQc[2,:], tc, ddQc[3,:], tc, ddQc[4,:], tc, ddQc[5,:])
-	plt.title("Joint accelerations")
+	plt.plot(tc, ddQc[0,:], label='ddq1')
+	plt.plot(tc, ddQc[1,:], label='ddq2')
+	plt.plot(tc, ddQc[2,:], label='ddq3')
+	plt.plot(tc, ddQc[3,:], label='ddq4')
+	plt.plot(tc, ddQc[4,:], label='ddq5')
+	plt.plot(tc, ddQc[5,:], label='ddq6')
+	plt.xlabel('Vrijeme [s]')
+	plt.ylabel('Ubrzanje zglobova [rad/s²]')
+	plt.title('Ubrzanja zglobova u vremenu')
+	plt.legend()
+	plt.grid()
 	plt.show()
 
-	# Create animation callback
+	
+	# Create animation callback.
 	sim = simulator(rob, Qc)
+	
+	# Start animation.
 	s.run(animation_timer_callback=sim.execute)
-
-	# Display tool trajectory in 3D
+	
+	# Display tool trajectory in 3D.
 	trajW = np.array(sim.trajW)
 	tool_tip_W = trajW[:,:3,3]
 
-	z_coords = tool_tip_W[:, 2]
-	print(f"Minimalna Z-koordinata putanje: {np.min(z_coords)}")
-	print(f"Maksimalna Z-koordinata putanje: {np.max(z_coords)}")
-	print(f"Prosječna Z-koordinata putanje: {np.mean(z_coords)}")
-
-	fig = plt.figure()
-	ax = fig.add_subplot(111, projection='3d')
+	ax = plt.axes(projection='3d')
 	ax.plot3D(tool_tip_W[:,0], tool_tip_W[:,1], tool_tip_W[:,2], 'b')
-	ax.set_xlabel("X")
-	ax.set_ylabel("Y")
-	ax.set_zlabel("Z")
-	plt.title("Tool Tip Trajectory")
+	ax.set_xlabel('X [m]')
+	ax.set_ylabel('Y [m]')
+	ax.set_zlabel('Z [m]')
+	ax.set_title('3D putanja vrha alata')
 	plt.show()
 
-	# Display plane contact
+	
+	# Display plane contact.
+	print('Visina alata:', np.min(tool_tip_W[:,2]))
+	d_board = np.min(tool_tip_W[:,2]) + 0.004
 	n_board = np.array([0, 0, 1])
-	d_board = 0.07
 	board_draw = planecontact(tool_tip_W, n_board, d_board)
-	fig, ax = plt.subplots()
+
+	fig, ax = plt.subplots(1, 1)
 	ax.plot(board_draw[:,0], board_draw[:,1], 'b.')
+	ax.set_xlabel('X [m]')
+	ax.set_ylabel('Y [m]')
+	ax.set_title('Kontakt vrha alata s ravninom')
 	ax.axis('equal')
-	plt.title("Plane Contact Points")
+	ax.grid()
 	plt.show()
 
+		
 	return tool_tip_W
+	
 
 
 def main():
