@@ -352,80 +352,122 @@ def task3():
 	q_home = np.array([-np.pi/2, np.pi/2, 0, 0, 0, 0])
 	T60_1 = np.identity(4)
 	T60_1[:3,:3] = roty(np.pi)
-	T60_1[:3,3] = np.array([0.15, -0.15, 0.2]) # y koordinata - lijevo/desno kada smo ispred robota
+	T60_1[:3,3] = np.array([0.17, 0.03, 0.2]) # y koordinata - lijevo/desno kada smo ispred robota
 	q1 = invkin(rob.DH,T60_1,[1, 0, 0])
-	
-	# Prvi trokut - NE DIRAJ
+
+	# Zvijezda
 	T60_2 = T60_1.copy()
-	T60_2[:3,3] = np.array([0.15, -0.15, 0.02]) # spuštanje alata na površinu
+	T60_2[:3,3] = np.array([0.17, 0.03, 0.02]) 
 	q2 = invkin(rob.DH,T60_2,[1, 0, 0])
 
 	T60_3 = T60_1.copy()
-	T60_3[:3,3] = np.array([0.2, -0.12, 0.02]) 
+	T60_3[:3,3] = np.array([0.21, 0.05, 0.02]) 
 	q3 = invkin(rob.DH,T60_3,[1, 0, 0])
 
 	T60_4 = T60_1.copy()
-	T60_4[:3,3] = np.array([0.25, -0.085, 0.02]) 
+	T60_4[:3,3] = np.array([0.17, 0.03, 0.2]) 
 	q4 = invkin(rob.DH,T60_4,[1, 0, 0])
 
 	T60_5 = T60_1.copy()
-	T60_5[:3,3] = np.array([0.3, -0.045, 0.02])
+	T60_5[:3,3] = np.array([0.17, 0.03, 0.02]) 
 	q5 = invkin(rob.DH,T60_5,[1, 0, 0])
 
 	T60_6 = T60_1.copy()
-	T60_6[:3,3] = np.array([0.35, 0, 0.02])
+	T60_6[:3,3] = np.array([0.17, 0.07, 0.02]) 
 	q6 = invkin(rob.DH,T60_6,[1, 0, 0])
 
 	T60_7 = T60_1.copy()
-	T60_7[:3,3] = np.array([0.25, 0.085, 0.02])
+	T60_7[:3,3] = np.array([0.2, 0.07, 0.2]) 
 	q7 = invkin(rob.DH,T60_7,[1, 0, 0])
 
 	T60_8 = T60_1.copy()
-	T60_8[:3,3] = np.array([0.15, 0.15, 0.02])
+	T60_8[:3,3] = np.array([0.2, 0.07, 0.02]) 
 	q8 = invkin(rob.DH,T60_8,[1, 0, 0])
 
 	T60_9 = T60_1.copy()
-	T60_9[:3,3] = np.array([0.15, 0.05, 0.02])
+	T60_9[:3,3] = np.array([0.2, 0.03, 0.02]) 
 	q9 = invkin(rob.DH,T60_9,[1, 0, 0])
 
-	T60_10 = T60_1.copy()
-	T60_10[:3,3] = np.array([0.15, 0, 0.02])
+	T60_10 = np.identity(4)
+	T60_10[:3,:3] = roty(np.pi)
+	T60_10[:3,3] = np.array([0.21, 0.05, 0.2]) 
 	q10 = invkin(rob.DH,T60_10,[1, 0, 0])
 
-	T60_11 = T60_1.copy()
-	T60_11[:3,3] = np.array([0.15, -0.05, 0.02])
+	T60_11 = T60_10.copy()
+	T60_11[:3,3] = np.array([0.21, 0.05, 0.02]) 
 	q11 = invkin(rob.DH,T60_11,[1, 0, 0])
 
-	T60_12 = T60_1.copy()
-	T60_12[:3,3] = np.array([0.15, -0.15, 0.02])
+	T60_12 = T60_10.copy()
+	T60_12[:3,3] = np.array([0.17, 0.07, 0.02]) 
 	q12 = invkin(rob.DH,T60_12,[1, 0, 0])
 
-	''''# Drugi trokut
-	T60_14 = T60_1.copy()
-	T60_14[:3,3] = np.array([0.1, 0, 0.025])
+	T60_13 = T60_10.copy()
+	T60_13[:3,3] = np.array([0.2, 0.03, 0.2]) 
+	q13 = invkin(rob.DH,T60_13,[1, 0, 0])
+
+	T60_14 = T60_10.copy()
+	T60_14[:3,3] = np.array([0.2, 0.03, 0.02]) 
 	q14 = invkin(rob.DH,T60_14,[1, 0, 0])
 
-	T60_15 = T60_1.copy()
-	T60_15[:3,3] = np.array([0.1, 0, 0.02])
+	T60_15 = T60_10.copy()
+	T60_15[:3,3] = np.array([0.16, 0.05, 0.02]) 
 	q15 = invkin(rob.DH,T60_15,[1, 0, 0])
 
-	T60_16 = T60_1.copy()
-	T60_16[:3,3] = np.array([0.18, -0.08, 0.02])
+	T60_16 = T60_10.copy()
+	T60_16[:3,3] = np.array([0.2, 0.07, 0.2]) 
 	q16 = invkin(rob.DH,T60_16,[1, 0, 0])
 
-	T60_17 = T60_1.copy()
-	T60_17[:3,3] = np.array([0.2, 0.1, 0.02])
+	T60_17 = T60_10.copy()
+	T60_17[:3,3] = np.array([0.2, 0.07, 0.02]) 
 	q17 = invkin(rob.DH,T60_17,[1, 0, 0])
 
-	T60_18 = T60_1.copy()
-	T60_18[:3,3] = np.array([0.2, -0.08, 0.02])
-	q18 = invkin(rob.DH,T60_18,[1, 0, 0])'''
+	T60_18 = T60_10.copy()
+	T60_18[:3,3] = np.array([0.16, 0.05, 0.02]) 
+	q18 = invkin(rob.DH,T60_18,[1, 0, 0])
 
-	Q = np.stack((q_home, q1, q2, q3, q4, q5, q6, q7, q8, q9, q10, q11, q12, q_home), 1)
+	#Krakovi
+	T60_19 = np.identity(4)
+	T60_19[:3,:3] = rotx(np.pi)
+	T60_19[:3,3] = np.array([0.17, 0.12, 0.2]) 
+	q19 = invkin(rob.DH,T60_19,[1, 0, 0])
+
+	T60_20 = T60_19.copy()
+	T60_20[:3,3] = np.array([0.17, 0.12, 0.02]) 
+	q20 = invkin(rob.DH,T60_20,[1, 0, 0])
+
+	T60_21 = T60_19.copy()
+	T60_21[:3,3] = np.array([0.17, 0.08, 0.02]) 
+	q21 = invkin(rob.DH,T60_21,[1, 0, 0])
+
+	T60_22 = T60_19.copy()
+	T60_22[:3,3] = np.array([0.185, 0.11, 0.2]) 
+	q22 = invkin(rob.DH,T60_22,[1, 0, 0])
+
+	T60_23 = T60_19.copy()
+	T60_23[:3,3] = np.array([0.185, 0.11, 0.02]) 
+	q23 = invkin(rob.DH,T60_23,[1, 0, 0])
+
+	T60_24 = T60_19.copy()
+	T60_24[:3,3] = np.array([0.185, 0.07, 0.02]) 
+	q24 = invkin(rob.DH,T60_24,[1, 0, 0])
+
+	T60_25 = T60_19.copy()
+	T60_25[:3,3] = np.array([0.2, 0.12, 0.2]) 
+	q25 = invkin(rob.DH,T60_25,[1, 0, 0])
+
+	T60_26 = T60_19.copy()
+	T60_26[:3,3] = np.array([0.2, 0.12, 0.02]) 
+	q26 = invkin(rob.DH,T60_26,[1, 0, 0])
+
+	T60_27 = T60_19.copy()
+	T60_27[:3,3] = np.array([0.2, 0.08, 0.02]) 
+	q27 = invkin(rob.DH,T60_27,[1, 0, 0])
+
+	Q = np.stack((q_home, q1, q2, q3, q4, q5, q6, q7, q8, q9, q10, q11, q12, q13, q14, q15, q16, q17, q18, q19, q20, q21, q22, q23, q24, q25, q26, q27, q_home), 1)
 	Ts = 0.01
 	Qc, dQc, ddQc, tc = hocook(Q, dqgr, ddqgr, Ts)
 	
-	'''# Display trajectory.
+	# Display trajectory.
 	# Položaj zglobova u vremenu
 	plt.figure()
 	plt.plot(tc, Qc[0,:], label='q1')
@@ -469,7 +511,7 @@ def task3():
 	plt.title('Ubrzanja zglobova u vremenu')
 	plt.legend()
 	plt.grid()
-	plt.show()'''
+	plt.show()
 
 	
 	# Create animation callback.
@@ -493,9 +535,8 @@ def task3():
 	
 	# Display plane contact.
 	print('Visina alata:', np.min(tool_tip_W[:,2]))
-	#d_board = np.min(tool_tip_W[:,2]) + 0.004
+	d_board = np.min(tool_tip_W[:,2]) + 0.004
 	n_board = np.array([0, 0, 1])
-	d_board = 0.0688
 	board_draw = planecontact(tool_tip_W, n_board, d_board)
 
 	fig, ax = plt.subplots(1, 1)
