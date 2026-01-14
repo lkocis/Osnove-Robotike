@@ -427,7 +427,7 @@ def task3():
 
 	#Krakovi
 	T60_19 = np.identity(4)
-	T60_19[:3,:3] = rotx(np.pi)
+	T60_19[:3,:3] = rotx(np.pi) # na grafu položaja, ovdje se promijeni kut
 	T60_19[:3,3] = np.array([0.17, 0.12, 0.2]) 
 	q19 = invkin(rob.DH,T60_19,[1, 0, 0])
 

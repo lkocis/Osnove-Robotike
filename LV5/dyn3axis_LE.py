@@ -17,34 +17,57 @@ c2=sp.cos(q2)
 s2=sp.sin(q2)
 c3=sp.cos(q3)
 s3=sp.sin(q3)
-T_1_0 = sp.Matrix([[c1, -s1, 0, l1*c1],[s1, c1, 0, l1*s1], [0, 0, 1, 0], [0, 0, 0, 1]])
-T_2_1 = sp.Matrix([[c2, -s2, 0, l2*c2],[s2, c2, 0, l2*s2], [0, 0, 1, 0], [0, 0, 0, 1]])
-T_3_2 = sp.Matrix([[c3, -s3, 0, l3*c3],[s3, c3, 0, l3*s3], [0, 0, 1, 0], [0, 0, 0, 1]])
+
+T_1_0 = sp.Matrix([
+	[c1, -s1, 0, l1*c1],
+	[s1, c1, 0, l1*s1], 
+	[0, 0, 1, 0], 
+	[0, 0, 0, 1]])
+
+T_2_1 = sp.Matrix([
+	[c2, -s2, 0, l2*c2],
+	[s2, c2, 0, l2*s2], 
+	[0, 0, 1, 0], 
+	[0, 0, 0, 1]])
+
+T_3_2 = sp.Matrix([
+	[c3, -s3, 0, l3*c3],
+	[s3, c3, 0, l3*s3], 
+	[0, 0, 1, 0], 
+	[0, 0, 0, 1]])
 
 c_1_0 = T_1_0 * c_1_1
 D1 = sp.simplify(T_1_0[:3,:3] * Dc1 * T_1_0[:3,:3].T)
 A1 = sp.zeros(3, 3)
 A1[:,0] = sp.diff(c_1_0, q1)[:3]
 A1=sp.simplify(A1)
-B1 = sp.Matrix([[0, 0, 0], [0, 0, 0], [1, 0, 0]])
+B1 = sp.Matrix([
+	[0, 0, 0], 
+	[0, 0, 0], 
+	[1, 0, 0]]) 
+#dim(B) = 3xn, n - br. zglobova
 D = sp.simplify(A1.T * A1 * m1 + B1.T * D1 * B1)
 
 T_2_0 = T_1_0 * T_2_1
 c_2_0 = T_2_0 * c_2_2
 D2 = sp.simplify(T_2_0[:3,:3] * Dc2 * T_2_0[:3,:3].T)
-A2 = sp.simplify(sp.diff(c_2_0, q1))
-A2 = A2.row_join(sp.simplify(sp.diff(c_2_0, q2)))
-B2 = B1.copy()
-B2[:,1] = T_1_0[:3,3]
+A2 = sp.zeros(3,3)      
+A2[:,0] = sp.diff(c_2_0, q1)[:3]
+A2[:,1] = sp.diff(c_2_0, q2)[:3]
+B2 = B1
+B2[:,1] = T_1_0[:3,2]
 D = sp.simplify(D + sp.simplify(A2.T * A2 * m2 + B2.T * D2 * B2))
 
-T_3_0 = T_1_0 * T_2_1 * T_3_2
+T_3_0 = T_2_0 * T_3_2
 c_3_0 = T_3_0 * c_3_3
 D3 = sp.simplify(T_3_0[:3,:3] * Dc3 * T_3_0[:3,:3].T)
-A3 = sp.simplify(sp.diff(c_3_0, q2))
+A3 = sp.simplify(sp.diff(c_3_0, q1))
+A3 = A3.row_join(sp.simplify(sp.diff(c_3_0, q2)))
 A3 = A3.row_join(sp.simplify(sp.diff(c_3_0, q3)))
-B3 = B2.copy()  
-B3[:,1] = T_2_0[:3,3]
+B3 = sp.zeros(3,3)
+B3[:,0] = sp.Matrix([0,0,1])       
+B3[:,1] = T_1_0[:3,2]              
+B3[:,2] = T_2_0[:3,2]  
 D = sp.simplify(D + sp.simplify(A3.T * A3 * m3 + B3.T * D3 * B3))
 
 print('D=')

@@ -1,19 +1,21 @@
 import numpy as np
 from scipy import integrate
 import matplotlib.pyplot as plt
-from LV5.dynplanar_LE import J1
 import vtk_visualizer as vis
 import or_util as rob
 
 class Robot():
-	def __init__(self, m2, m3, l2, l3, b1, b2, b3, r_tool, scene, T0S, gravity=False):
+	def __init__(self, m1, m2, m3, l1, l2, l3, b1, b2, b3, r_tool, scene, T0S, gravity=False):
+		self.m1 = m1
 		self.m2 = m2
 		self.m3 = m3
+		self.l1 = l1
 		self.l2 = l2
 		self.l3 = l3
 		self.b1 = b1
 		self.b2 = b2
 		self.b3 = b3
+		self.J1 = m1 * l1 / 12
 		self.J2 = m2 * l2 / 12
 		self.J3 = m3 * l3 / 12
 		self.T0S = T0S
@@ -152,16 +154,26 @@ class Robot():
 		dq3 = dq[2]
 
 		#ADD YOUR CODE HERE:************
-		D= np.array([[J1 + J2 + J3 + l1**2*m1/4 + l1**2*m2 + l1*l2*m2*np.cos(q(2)) + l2**2*m2/4, m2*(4*l1**2 + 4*l1*l2*np.cos(q(2)) + l2**2)/4, l2*m2*(2*l1*np.cos(q(2)) + l2)/4], [m2*(4*l1**2 + 4*l1*l2*cos(q2) + l2**2)/4, J2*l1**2*sin(q2)**2 + J3*(l1*sin(q1) + l2*sin(q1 + q2))*(2*(l1*sin(q1) + l2*sin(q1 + q2))*cos(q2 + q3)**2 - (l1*cos(q1) + l2*cos(q1 + q2))*sin(2*q2 + 2*q3))/2 - J3*(l1*cos(q1) + l2*cos(q1 + q2))*((l1*sin(q1) + l2*sin(q1 + q2))*sin(2*q2 + 2*q3) - 2*(l1*cos(q1) + l2*cos(q1 + q2))*sin(q2 + q3)**2)/2 + l1**2*m2 + l1*l2*m2*cos(q2) + l2**2*m2/4 + m3*(4*l2**2 + 4*l2*l3*cos(q3) + l3**2)/4, l2*m2*(2*l1*cos(q2) + l2)/4 + l3*m3*(2*l2*cos(q3) + l3)/4], [l2*m2*(2*l1*cos(q2) + l2)/4, l2*m2*(2*l1*cos(q2) + l2)/4 + l3*m3*(2*l2*cos(q3) + l3)/4, l2**2*m2/4 + l3**2*m3/4]])
+		D= np.array([
+			[J1 + J2 + J3 + l1**2*m1/4 + l1**2*m2 + l1*l2*m2*np.cos(q2) + l2**2*m2/4 + m3*(4*l1**2 + 8*l1*l2*np.cos(q2) + 4*l1*l3*np.cos(q2 + q3) + 4*l2**2 + 4*l2*l3*np.cos(q3) + l3**2)/4, J2 + J3 + l1*l2*m2*np.cos(q2)/2 + l2**2*m2/4 + m3*(4*l1*l2*np.cos(q2) + 2*l1*l3*np.cos(q2 + q3) + 4*l2**2 + 4*l2*l3*np.cos(q3) + l3**2)/4, J3 + l3*m3*(2*l1*np.cos(q2 + q3) + 2*l2*np.cos(q3) + l3)/4], 
+			[J2 + J3 + l1*l2*m2*np.cos(q2)/2 + l2**2*m2/4 + m3*(4*l1*l2*np.cos(q2) + 2*l1*l3*np.cos(q2 + q3) + 4*l2**2 + 4*l2*l3*np.cos(q3) + l3**2)/4, J2 + J3 + l2**2*m2/4 + l2**2*m3 + l2*l3*m3*np.cos(q3) + l3**2*m3/4, J3 + l3*m3*(2*l2*np.cos(q3) + l3)/4], 
+			[J3 + l3*m3*(2*l1*np.cos(q2 + q3) + 2*l2*np.cos(q3) + l3)/4, J3 + l3*m3*(2*l2*np.cos(q3) + l3)/4, J3 + l3**2*m3/4]])
 		
-		N= np.array([[dq2*(-4*dq1*l1*l2*m2*sin(q2) + dq2*(-J3*(l1*sin(q1) + l2*sin(q1 + q2))*((l1*sin(q1) + l2*sin(q1 + q2))*sin(2*q2 + 2*q3) - 2*(l1*cos(q1) + l2*cos(q1 + q2))*sin(q2 + q3)**2) - J3*(l1*sin(q1) + l2*sin(q1 + q2))*((l1*sin(q1) + l2*sin(q1 + q2))*sin(2*q2 + 2*q3) + 2*(l1*cos(q1) + l2*cos(q1 + q2))*cos(q2 + q3)**2) + J3*(l1*cos(q1) + l2*cos(q1 + q2))*(2*(l1*sin(q1) + l2*sin(q1 + q2))*sin(q2 + q3)**2 + (l1*cos(q1) + l2*cos(q1 + q2))*sin(2*q2 + 2*q3)) - J3*(l1*cos(q1) + l2*cos(q1 + q2))*(2*(l1*sin(q1) + l2*sin(q1 + q2))*cos(q2 + q3)**2 - (l1*cos(q1) + l2*cos(q1 + q2))*sin(2*q2 + 2*q3)) - 4*l1*l2*m2*sin(q2)) - 2*dq3*l1*l2*m2*sin(q2))/4], [dq1*l1*l2*m2*(2*dq1 - 2*dq2 + dq3)*sin(q2)/4 + dq2*(2*dq1*(J3*(l1*sin(q1) + l2*sin(q1 + q2))*((l1*sin(q1) + l2*sin(q1 + q2))*sin(2*q2 + 2*q3) - 2*(l1*cos(q1) + l2*cos(q1 + q2))*sin(q2 + q3)**2) + J3*(l1*sin(q1) + l2*sin(q1 + q2))*((l1*sin(q1) + l2*sin(q1 + q2))*sin(2*q2 + 2*q3) + 2*(l1*cos(q1) + l2*cos(q1 + q2))*cos(q2 + q3)**2) - J3*(l1*cos(q1) + l2*cos(q1 + q2))*(2*(l1*sin(q1) + l2*sin(q1 + q2))*sin(q2 + q3)**2 + (l1*cos(q1) + l2*cos(q1 + q2))*sin(2*q2 + 2*q3)) + J3*(l1*cos(q1) + l2*cos(q1 + q2))*(2*(l1*sin(q1) + l2*sin(q1 + q2))*cos(q2 + q3)**2 - (l1*cos(q1) + l2*cos(q1 + q2))*sin(2*q2 + 2*q3)) + l1*l2*m2*sin(q2)) + dq2*(2*J2*l1**2*sin(2*q2) + 2*J3*l1**2*sin(-2*q1 + 2*q2 + 2*q3) + J3*l1*l2*sin(q1)*sin(q1 + q2)*sin(2*q2 + 2*q3) + 2*J3*l1*l2*sin(q1)*cos(q1 + q2)*cos(q2 + q3)**2 - J3*l1*l2*sin(q2) - 2*J3*l1*l2*sin(q1 + q2)*sin(q2 + q3)*(l1*cos(q1) + l2*cos(q1 + q2))*sin(q2 + q3)**2) - J3*(l1*sin(q1) + l2*sin(q1 + q2))*((l1*sin(q1) + l2*sin(q1 + q2))*sin(2*q2 + 2*q3) + 2*(l1*cos(q1) + l2*cos(q1 + q2))*cos(q2 + q3)**2) + J3*(l1*cos(q1) + l2*cos(q1 + q2))*(2*(l1*sin(q1) + l2*sin(q1 + q2))*sin(q2 + q3)**2 + (l1*cos(q1) + l2*cos(q1 + q2))*sin(2*q2 + 2*q3)) - J3*(l1*cos(q1) + l2*cos(q1 + q2))*(2*(l1*sin(q1) + l2*sin(q1 + q2))*cos(q2 + q3)**2 - (l1*cos(q1) + l2*cos(q1 + q2))*sin(2*q2 + 2*q3)) - 4*l1*l2*m2*sin(q2)) - 2*dq3*l1*l2*m2*sin(q2))/4], [dq1*l1*l2*m2*(2*dq1 - 2*dq2 + dq3)*sin(q2)/4 + dq2*(2*dq1*(J3*(l1*sin(q1) + l2*sin(q1 + q2))*((l1*sin(q1) + l2*sin(q1 + q2))*sin(2*q2 + 2*q3) - 2*(l1*cos(q1) + l2*cos(q1 + q2))*sin(q2 + q3)**2) + J3*(l1*sin(q1) + l2*sin(q1 + q2))*((l1*sin(q1) + l2*sin(q1 + q2))*sin(2*q2 + 2*q3) + 2*(l1*cos(q1) + l2*cos(q1 + q2))*cos(q2 + q3)**2) - J3*(l1*cos(q1) + l2*cos(q1 + q2))*(2*(l1*sin(q1) + l2*sin(q1 + q2))*sin(q2 + q3)**2 + (l1*cos(q1) + l2*cos(q1 + q2))*sin(2*q2 + 2*q3)) + J3*(l1*cos(q1) + l2*cos(q1 + q2))*(2*(l1*sin(q1) + l2*sin(q1 + q2))*cos(q2 + q3)**2 - (l1*cos(q1) + l2*cos(q1 + q2))*sin(2*q2 + 2*q3)) + l1*l2*m2*sin(q2)) + dq2*(2*J2*l1**2*sin(2*q2) + 2*J3*l1**2*sin(-2*q1 + 2*q2 + 2*q3) + J3*l1*l2*sin(q1)*sin(q1 + q2)*sin(2*q2 + 2*q3) + 2*J3*l1*l2*sin(q1)*cos(q1 + q2)*cos(q2 + q3)**2 - J3*l1*l2*sin(q2) - 2*J3*l1*l2*sin(q1 + q2)*sin(q2 + q3)*- (l1*cos(q1) + l2*cos(q1 + q2))*sin(2*q2 + 2*q3)) - 4*l1*l2*m2*sin(q2)) - 2*dq3*l1*l2*m2*sin(q2))/4], [dq1*l1*l2*m2*(2*dq1 - 2*dq2 + dq3)*sin(q2)/4 + dq2*(2*dq1*(J3*(l1*sin(q1) + l2*sin(q1 + q2))*((l1*sin(q1) + l2*sin(q1 + q2))*sin(2*q2 + 2*q3) - 2*(l1*cos(q1) + l2*cos(q1 + q2))*sin(q2 + q3)**2) + J3*(l1*sin(q1) + l2*sin(q1 + q2))*((l1*sin(q1) + l2*sin(q1 + q2))*sin(2*q2 + 2*q3) + 2*(l1*cos(q1) + l2*cos(q1 + q2))*cos(q2 + q3)**2) - J3*(l1*cos(q1) + l2*cos(q1 + q2))*(2*(l1*sin(q1) + l2*sin(q1 + q2))*sin(q2 + q3)**2 + (l1*cos(q1) + l2*cos(q1 + q2))*sin(2*q2 + 2*q3)) + J3*(l1*cos(q1) + l2*cos(q1 + q2))*(2*(l1*sin(q1) + l2*sin(q1 + q2))*cos(q2 + q3)**2 - (l1*cos(q1) + l2*cos(q1 + q2))*sin(2*q2 + 2*q3)) + l1*l2*m2*sin(q2)) + dq2*(2*J2*l1**2*sin(2*q2) + 2*J3*l1**2*sin(-2*q1 + 2*q2 + 2*q3) + J3*l1*l2*sin(q1)*sin(q1 + q2)*sin(2*q2 + 2*q3) + 2*J3*l1*l2*sin(q1)*cos(q1 + q2)*cos(q2 + q3)**2 - J3*l1*l2*sin(q2) - 2*J3*l1*l2*sin(q1 + q2)*sin(q2 + q3)*1 + q2))*sin(q2 + q3)**2) + J3*(l1*sin(q1) + l2*sin(q1 + q2))*((l1*sin(q1) + l2*sin(q1 + q2))*sin(2*q2 + 2*q3) + 2*(l1*cos(q1) + l2*cos(q1 + q2))*cos(q2 + q3)**2) - J3*(l1*cos(q1) + l2*cos(q1 + q2))*(2*(l1*sin(q1) + l2*sin(q1 + q2))*sin(q2 + q3)**2 + (l1*cos(q1) + l2*cos(q1 + q2))*sin(2*q2 + 2*q3)) + J3*(l1*cos(q1) + l2*cos(q1 + q2))*(2*(l1*sin(q1) + l2*sin(q1 + q2))*cos(q2 + q3)**2 - (l1*cos(q1) + l2*cos(q1 + q2))*sin(2*q2 + 2*q3)) + l1*l2*m2*sin(q2)) + dq2*(2*J2*l1**2*sin(2*q2) + 2*J3*l1**2*sin(-2*q1 + 2*q2 + 2*q3) + J3*l1*l2*sin(q1)*sin(q1 + q2)*sin(2*q2 + 2*q3) + 2*J3*l1*l2*sin(q1)*cos(q1 + q2)*cos(q2 + q3)**2 - J3*l1*l2*sin(q2) - 2*J3*l1*l2*sin(q1 + q2)*sin(q2 + q3)*q1 + q2))*sin(2*q2 + 2*q3)) + J3*(l1*cos(q1) + l2*cos(q1 + q2))*(2*(l1*sin(q1) + l2*sin(q1 + q2))*cos(q2 + q3)**2 - (l1*cos(q1) + l2*cos(q1 + q2))*sin(2*q2 + 2*q3)) + l1*l2*m2*sin(q2)) + dq2*(2*J2*l1**2*sin(2*q2) + 2*J3*l1**2*sin(-2*q1 + 2*q2 + 2*q3) + J3*l1*l2*sin(q1)*sin(q1 + q2)*sin(2*q2 + 2*q3) + 2*J3*l1*l2*sin(q1)*cos(q1 + q2)*cos(q2 + q3)**2 - J3*l1*l2*sin(q2) - 2*J3*l1*l2*sin(q1 + q2)*sin(q2 + q3)**2*cos(q1) - J3*l1*l2*sin(2*q2 + 2*q3)*cos(q1)*cos(q1 + q2) + 3*J3*l1*l2*sin(-2*q1 + q2 + 2*q3) + J3*l2**2*sin(q1 + q2)**2*sin(2*q2 + 2*q3) - 2*J3*l2**2*sin(q1 + q2)*sin(q2 + q3)**2*cos(q1 + q2) + 2*J3*l2**2*sin(q1 + q2)*cos(q1 + q2)*cos(q2 + q3)**2 - J3*l2**2*sin(2*q1 - n(q1 + q2)*sin(2*q2 + 2*q3) + 2*J3*l1*l2*sin(q1)*cos(q1 + q2)*cos(q2 + q3)**2 - J3*l1*l2*sin(q2) - 2*J3*l1*l2*sin(q1 + q2)*sin(q2 + q3)**2*cos(q1) - J3*l1*l2*sin(2*q2 + 2*q3)*cos(q1)*cos(q1 + q2) + 3*J3*l1*l2*sin(-2*q1 + q2 + 2*q3) + J3*l2**2*sin(q1 + q2)**2*sin(2*q2 + 2*q3) - 2*J3*l2**2*sin(q1 + q2)*sin(q2 + q3)**2*cos(q1 + q2) + 2*J3*l2**2*sin(q1 + q2)*cos(q1 + q2)*cos(q2 + q3)**2 - J3*l2**2*sin(2*q1 - *2*cos(q1) - J3*l1*l2*sin(2*q2 + 2*q3)*cos(q1)*cos(q1 + q2) + 3*J3*l1*l2*sin(-2*q1 + q2 + 2*q3) + J3*l2**2*sin(q1 + q2)**2*sin(2*q2 + 2*q3) - 2*J3*l2**2*sin(q1 + q2)*sin(q2 + q3)**2*cos(q1 + q2) + 2*J3*l2**2*sin(q1 + q2)*cos(q1 + q2)*cos(q2 + q3)**2 - J3*l2**2*sin(2*q1 - 2*q3) - J3*l2**2*sin(2*q2 + 2*q3)*cos(q1 + q2)**2 - 2*l1*l2*m2*sin(q2)) + dq3*(4*J3*l1**2*sin(-2*q1 + 2*q2 + 2*q3) + 8*J3*l1*l2*sin(-2*qq3) - 2*J3*l2**2*sin(q1 + q2)*sin(q2 + q3)**2*cos(q1 + q2) + 2*J3*l2**2*sin(q1 + q2)*cos(q1 + q2)*cos(q2 + q3)**2 - J3*l2**2*sin(2*q1 - 2*q3) - J3*l2**2*sin(2*q2 + 2*q3)*cos(q1 + q2)**2 - 2*l1*l2*m2*sin(q2)) + dq3*(4*J3*l1**2*sin(-2*q1 + 2*q2 + 2*q3) + 8*J3*l1*l2*sin(-2*q2*q3) - J3*l2**2*sin(2*q2 + 2*q3)*cos(q1 + q2)**2 - 2*l1*l2*m2*sin(q2)) + dq3*(4*J3*l1**2*sin(-2*q1 + 2*q2 + 2*q3) + 8*J3*l1*l2*sin(-2*q1 + q2 + 2*q3) - 4*J3*l2**2*sin(2*q1 - 2*q3) + l1*l2*m2*sin(q2) - 4*l2*l3*m3*sin(q3)))/4 - dq3*l2*(-dq1*l1*m2*sin(q2) + dq2*l1*m2*sin(q2) + 2*dq3*l3*m3*sin(q3))/4], [dq2*(-dq1*l1*l2*m2*sin(q2) - dq2*(J3*l1**2*sin(-2*q1 + 2*q2 + 2*q3) + 2*J3*l1*l2*sin(-2*q1 + q2 + 2*q3) - J3*l2**2*sin(2*q1 - 2*q3) + l1*l2*m2*sin(q2) - l2*l3*m3*sin(q3)))/2]])J3*l2**2*sin(2*q1 - 2*q3) + l1*l2*m2*sin(q2) - l2*l3*m3*sin(q3)))/2]])
-		# if self.gravity:
-		# 	g = 9.81
-		# else:
-		# 	g = 0
+		N= np.array([
+			[-dq1*dq2*l1*l2*m2*np.sin(q2) - 2*dq1*dq2*l1*l2*m3*np.sin(q2) - dq1*dq2*l1*l3*m3*np.sin(q2 + q3) - dq1*dq3*l1*l3*m3*np.sin(q2 + q3) - dq1*dq3*l2*l3*m3*np.sin(q3) - dq2**2*l1*l2*m2*np.sin(q2)/2 - dq2**2*l1*l2*m3*np.sin(q2) - dq2**2*l1*l3*m3*np.sin(q2 + q3)/2 - dq2*dq3*l1*l3*m3*np.sin(q2 + q3) - dq2*dq3*l2*l3*m3*np.sin(q3) - dq3**2*l1*l3*m3*np.sin(q2 + q3)/2 - dq3**2*l2*l3*m3*np.sin(q3)/2], 
+			[dq1**2*l1*l2*m2*np.sin(q2)/2 + dq1**2*l1*l2*m3*np.sin(q2) + dq1**2*l1*l3*m3*np.sin(q2 + q3)/2 - dq1*dq3*l2*l3*m3*np.sin(q3) - dq2*dq3*l2*l3*m3*np.sin(q3) - dq3**2*l2*l3*m3*np.sin(q3)/2], 
+			[l3*m3*(dq1**2*l1*np.sin(q2 + q3) + dq1**2*l2*np.sin(q3) + 2*dq1*dq2*l2*np.sin(q3) + dq2**2*l2*np.sin(q3))/2]])
+		
+		if self.gravity:
+			g = 9.81
+		else:
+			g = 0
 
-		# h = ...
-		# B = ...
+		h = np.array([
+			[g*(l1*m1*np.cos(q1) + 2*l1*m2*np.cos(q1) + 2*l1*m3*np.cos(q1) + l2*m2*np.cos(q1 + q2) + 2*l2*m3*np.cos(q1 + q2) + l3*m3*np.cos(q1 + q2 + q3))/2], 
+			[g*(l2*m2*np.cos(q1 + q2) + 2*l2*m3*np.cos(q1 + q2) + l3*m3*np.cos(q1 + q2 + q3))/2], 
+			[g*l3*m3*np.cos(q1 + q2 + q3)/2]])
+		B = np.array([[b1*dq[0]], [b2*dq[1]], [b3*dq[2]]])
 		#END*****************************
 
 		return D, N, h, B

@@ -4,11 +4,13 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import vtk_visualizer as vis
 import or_util as rob
-import robot3axis
+import robot3axis_students
 from hocook import hocook
 
+m1 = 1
 m2 = 1
 m3 = 1
+l1 = 1
 l2 = 1
 l3 = 1
 b1 = 0.1
@@ -16,7 +18,7 @@ b2 = 0.1
 b3 = 0.1
 r_tool = 0.02
 
-q = np.array([0.0, 0.0])
+q = np.array([0.0, 0.0, 0.0])
 
 # Simulation.
 class Simulation():
@@ -26,11 +28,13 @@ class Simulation():
 		self.ctrlalg = ctrlalg
 		self.ref_traj = ref_traj
 		self.Ts = Ts
+		self.D_history = []
 
 	def step(self, t, state, u):
 		q = state[:3]
 		dq = state[3:6]
 		D, N, h, B = self.robot.dynmodel(q, dq)
+		self.D_history.append(D)
 		ddq = np.linalg.inv(D) @ (u - N - h - B)
 		dstate = np.concatenate((dq, ddq[:,0]), axis=0)
 		return dstate
@@ -62,8 +66,23 @@ class RobCtrlAlg():
 
 	def step(self, q, dq, qr, dqr, ddqr):
 		#ADD YOUR CODE HERE: *****************************
-		#D, N, h, B = self.robot.dynmodel(q, dq)
-
+		D, N, h, B = self.robot.dynmodel(q, dq)
+		uFF = ddqr
+		uFB = np.zeros(3)
+		if self.feedback:
+			ep = qr - q
+			ev = dqr - dq
+			uFB = self.Kp * ep + self.Kv * ev
+		if not self.full_D:
+			D[0,1] = 0.0
+			D[1,0] = 0.0
+		u = D @ (uFF + uFB)[:, np.newaxis]
+		if self.cc_model:
+			u = u + N
+		if self.g_model:
+			u = u + h
+		if self.friction_model:
+			u = u + B
 		#END ***********************************************
 		return u
 	
@@ -100,7 +119,7 @@ rf.set_pose(np.eye(4))
 
 # Robot.
 T0S = np.identity(4)
-robot = robot3axis.Robot(m2, m3, l2, l3, b1, b2, b3, r_tool, s, T0S, gravity=True)
+robot = robot3axis_students.Robot(m1, m2, m3, l1, l2, l3, b1, b2, b3, r_tool, s, T0S, gravity=True)
 dqgr=np.pi*np.ones((1,3))
 ddqgr=10*np.pi*np.ones((1,3))
 dqgr=2*dqgr
@@ -200,19 +219,57 @@ while next_simulation:
 
 	# Display trajectory.
 	if not animation:
-		plt.plot(t,Qr[0,:],t,Qr[1,:],t,Qr[1,:],t,traj[:,0],t,traj[:,1],t,traj[:,2])
+		# Zad 3, 4, 5, 6:*******************************
+		D_array = np.array(sim.D_history)  
+		print('Srednje vrijednosti momenta inercije D za svaki zglob: ')
+		print('D1 srednje: ', np.mean(D_array[:,0,0]))
+		print('D2 srednje: ', np.mean(D_array[:,1,1]))
+		print('D3 srednje: ', np.mean(D_array[:,2,2]))
+		#****Graf t/D****************************
+		t_D = np.arange(D_array.shape[0]) * Ts
+		plt.figure()
+		plt.plot(t_D, D_array[:,0,0], label='1. zglob (D1)')
+		plt.plot(t_D, D_array[:,1,1], label='2. zglob (D2)')
+		plt.plot(t_D, D_array[:,2,2], label='3. zglob (D3)')
+		plt.xlabel('Vrijeme [s]')
+		plt.ylabel('D moment inercije [kgm²]')
+		plt.legend()
+		plt.title('Promjena momenta inercije D tijekom vremena')
+		plt.grid(True)
+		plt.show()
+		#****???*****************************************
+		plt.figure()
+		plt.plot(t,Qr[0,:],t,Qr[1,:],t,Qr[1,:], label='Zglob')
+		plt.plot(t,traj[:,0],t,traj[:,1],t,traj[:,2], '--', label='Ostvareno')
 		plt.show()
 		# plt.plot(t,dQ[0,:],t,dQ[1,:])
 		# plt.show()
 		# plt.plot(t,ddQ[0,:],t,ddQ[1,:])
 		# plt.show()
-		plt.plot(ref_traj_W[:,1], ref_traj_W[:,2], traj_W[:,1], traj_W[:,2])
+		#****2D prikaz************************************
+		plt.figure()
+		plt.plot(ref_traj_W[:,1], ref_traj_W[:,2], label='Referentna')
+		plt.plot(traj_W[:,1], traj_W[:,2], label='Ostvarena')
 		plt.axis('equal')
+		plt.xlabel('Y')
+		plt.ylabel('Z')
+		plt.legend()
+		plt.grid(True)
+		plt.title('Prikaz referentne i ostvarene putanje')
 		plt.show()
+		#****3D prikaz************************************
 		fig = plt.figure()
 		ax = fig.add_subplot(111, projection='3d')
-		ax.plot(ref_traj_W[:,0], ref_traj_W[:,1], ref_traj_W[:,2])
-		ax.plot(traj_W[:,0], traj_W[:,1], traj_W[:,2])
+		ax.plot(ref_traj_W[:,0], ref_traj_W[:,1], ref_traj_W[:,2], label='Referentna')
+		ax.plot(traj_W[:,0], traj_W[:,1], traj_W[:,2], label='Ostvarena')
+		ax.set_xlabel('X')
+		ax.set_ylabel('Y')
+		ax.set_zlabel('Z')
+		ax.legend()
+		ax.set_title('3D prikaz referentne i ostvarene putanje')
 		set_axes_equal(ax)
 		plt.show()
+		#****Gibanje vrha alata u 2D i 3D s konst. D*********
 
+
+		
