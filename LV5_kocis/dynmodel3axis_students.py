@@ -219,7 +219,7 @@ while next_simulation:
 
 	# Display trajectory.
 	if not animation:
-		# Zad 3, 4, 5, 6:*******************************
+		# Zad 4:*******************************
 		D_array = np.array(sim.D_history)  
 		print('Srednje vrijednosti momenta inercije D za svaki zglob: ')
 		print('D1 srednje: ', np.mean(D_array[:,0,0]))
@@ -269,7 +269,47 @@ while next_simulation:
 		ax.set_title('3D prikaz referentne i ostvarene putanje')
 		set_axes_equal(ax)
 		plt.show()
-		#****Gibanje vrha alata u 2D i 3D s konst. D*********
+		#****Gibanje vrha alata u 2D s konst. D*********
+		D_mean = np.mean(np.array(sim.D_history), axis=0)
+		original_dynmodel = robot.dynmodel
+
+		def constant_dynmodel(q, dq):
+			_, N, h, B = original_dynmodel(q, dq) 
+			return D_mean, N, h, B
+        
+		robot.dynmodel = constant_dynmodel
+        
+		ctrlalg = RobCtrlAlg(robot=robot, Kp=Kp, Kv=Kv, feedback=True)
+		sim = Simulation(s, robot, ctrlalg, Ts, ref_traj)
+		traj_const = rob.simulate(sim, t.shape[0], Ts, ref_traj[:6,0])
+		traj_W_const = robot.fwdkin(traj_const[:,:3])
+        
+		robot.dynmodel = original_dynmodel
+
+		plt.figure()
+		plt.plot(ref_traj_W[:,1], ref_traj_W[:,2], label='Referentna')
+		plt.plot(traj_W[:,1], traj_W[:,2], label='Ostvarena')
+		plt.plot(traj_W_const[:,1], traj_W_const[:,2], '--', label='Gibanje s konst. D')
+		plt.axis('equal')
+		plt.xlabel('Y')
+		plt.ylabel('Z')
+		plt.legend()
+		plt.grid(True)
+		plt.title('Prikaz referentne, ostvarene putanje i putanje s konst. D')
+		plt.show()
+		#****Gibanje vrha alata u 3D s konst. D*********
+		fig = plt.figure()
+		ax = fig.add_subplot(111, projection='3d')
+		ax.plot(ref_traj_W[:,0], ref_traj_W[:,1], ref_traj_W[:,2], label='Referentna')
+		ax.plot(traj_W[:,0], traj_W[:,1], traj_W[:,2], label='Ostvarena')
+		ax.plot(traj_W_const[:,0], traj_W_const[:,1], traj_W_const[:,2], '--', label='Gibanje s konst. D')
+		ax.set_xlabel('X')
+		ax.set_ylabel('Y')
+		ax.set_zlabel('Z')
+		ax.legend()
+		ax.set_title('3D prikaz referentne, ostvarene putanje i putanje s konst. D')
+		set_axes_equal(ax)
+		plt.show()
 
 
 		
